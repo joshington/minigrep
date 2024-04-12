@@ -15,13 +15,31 @@ pub struct Config {
 
 
 impl Config {
-	pub fn new(args: &[String]) -> Result<Config, &'static str> {
-		if args.len() < 3 {
-			panic!("not enough arguments");
-		}
-		let query = args[1].clone();
-		let filename = args[2].clone();
+	//pub fn new(args: &[String]) -> Result<Config, &'static str> {
+	pub fn new(mut args: std::env::Args) -> Result<Config, &'static str> {
+		/*
+			--> since the std library documenation also mentions that std::env::Args implements
+			the Iterator trait, so we know we can call the next mthd on it.
 
+			param args has the type std::env::Args instead of &[String], because we're
+			taking ownership of args and we'll be mutating args by iterating over it.
+			so we have to add the mut keyword to make it mutable
+		*/
+		args.next();
+		let query = match args.next() {
+			Some(arg) => arg,
+			None => return Err("Didnt get a query string"),
+		};
+		// if args.len() < 3 {
+		// 	//panic!("not enough arguments");
+		// 	return Err("not enough arguments");
+		// // }
+		// let query = args[1].clone();
+		//let filename = args[2].clone();
+		let filename = match args.next() {
+			Some(arg) => arg,
+			None => return Err("Didnt get a file name"),
+		};
 		let case_sensitive = env::var("CASE_INSENSITIVE").is_err();
 		//==the env::var function returns a Result that will be the successful Ok variant that contains
 		//the value of the environment variable if the envt variable is set.It will return the Err
@@ -95,17 +113,27 @@ Trust me.";
 
 //==rust has a helpful mthd to handle line-by-line iteration of strings
 pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
-	let mut results = Vec::new();
+	contents.lines()
+		.filter(|line| line.contains(query))
+		.collect() //here we collect the matching lines into another vector
+		//with collect.
+	//let mut results = Vec::new();
 	//==storing matching lines - we need a way to store the lines that contain our query string.
 
-	for line in contents.lines() {
-		if line.contains(query) {
-			results.push(line);
+	//for line in contents.lines() {
+	//	if line.contains(query) {
+	//		results.push(line);
 
-		}
-	}
-	results
+	//	}
+	//}
+	//results
 	//storing the lines that match so we can return them.
+	/*
+		note: the functional programming style prefers to minimize the amount of mutable
+		state to make code clearer.removing the mutable state might enable a future
+		enhancement to make searching happen in parallel, because we wouldnt have to
+		manage concurrent access to the results vector.
+	*/
 }
 
 /*
@@ -126,12 +154,15 @@ pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
 pub fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
 	let query = query.to_lowercase(); //query is now a String rather than a string slice
 //because calling to_lowercase creates new data rather than referencing existing data.
-	let mut results = Vec::new();
-
-	for line in contents.lines() {
-		if line.to_lowercase().contains(&query) {
-			results.push(line);
-		}
-	}
-	results
+	//let mut results = Vec::new();
+	//using the filter adaptor here.
+	contents.lines()
+		.filter(|line|line.to_lowercase().contains(&query))
+		.collect()
+	//for line in contents.lines() {
+	//	if line.to_lowercase().contains(&query) {
+	//		results.push(line);
+	//	}
+	//}
+	//results
 }

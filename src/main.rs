@@ -16,15 +16,23 @@ use minigrep::Config;
 
 
 fn main() {
-    let args: Vec<String> = env::args().collect(); //we use the collect function to create many kinds of collections
+    //let args: Vec<String> = env::args().collect(); //we use the collect function to create many kinds of collections
 	//we explicitly annotate the type of args to specify that we want a vector of strings.
 
-	let config = Config::new(&args).unwrap_or_else(|err| {
-		eprintln!("Problem parsing arguments: {}", err);
-		process::exit(1);//will stop the program immediately and return the number that 
+	//let config = Config::new(&args).unwrap_or_else(|err| {
+	//	eprintln!("Problem parsing arguments: {}", err);
+	//	process::exit(1);//will stop the program immediately and return the number that 
 		//was passed as the exit status code.
+	//});
+	let config = Config::new(env::args()).unwrap_or_else(|err| {
+		eprintln!("Problem parsing arguments: {}", err);
+		process::exit(1);
 	});
-
+	/*
+		env::args func returns an iterator, rather than collecting the iterator values into
+		a vector and then passing a slice to Config::new, now we're passing ownership 
+		of the iterator returned from env::args to Config::new directly. 
+	*/
 	
 	if let Err(e) =  minigrep::run(config) {
 		eprintln!("Application error: {}", e);
